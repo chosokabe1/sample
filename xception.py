@@ -6,6 +6,14 @@ from keras.layers import Input
 from tensorflow.keras.utils import to_categorical
 import numpy as np
 import csv
+import requests # line
+
+def line_notify(message):
+    line_notify_token = 'Fr43LJvmOI9rX2le4mVYALcdFJoxIifLJ418fvMidq2'
+    line_notify_api = 'https://notify-api.line.me/api/notify'
+    payload = {'message': message}
+    headers = {'Authorization': 'Bearer ' + line_notify_token} 
+    requests.post(line_notify_api, data=payload, headers=headers)
 
 def train():
     # CIFAR-10の画像データを取得（学習用とテスト用に分かれている）
@@ -27,13 +35,16 @@ def train():
     input = Input(shape=(32, 32, 3))
     model = Xception(weights=None, input_tensor=input, classes=n_labels)
     model.compile(optimizer="rmsprop", loss="categorical_crossentropy", metrics=["accuracy"])
-    h = model.fit(x_train, y_train, epochs=500, validation_data=(x_test, y_test))
+    h = model.fit(x_train, y_train, epochs=100, validation_data=(x_test, y_test))
+
+    for key in h.history.keys():
+        print(key)
 
     # 実行履歴（正解率の推移）をcsvで保存
     loss = h.history["loss"]
     val_loss = h.history["val_loss"]
-    acc = h.history["acc"]
-    val_acc = h.history["val_acc"]
+    acc = h.history["accuracy"]
+    val_acc = h.history["val_accuracy"]
     with open("history.csv", "wt", encoding="utf-8") as out:
         writer = csv.writer(out)
         writer.writerow(["EPOCH", "ACC(TRAIN)", "ACC(TEST)", "LOSS(TRAIN)", "LOSS(TEST)"])
@@ -50,3 +61,6 @@ if __name__ == "__main__":
 
   model = train()
   model.save("cifer10+xception.hdf5")
+
+  message = "終了しました"
+  line_notify(message)
